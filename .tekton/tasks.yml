@@ -1,0 +1,30 @@
+apiVersion: tekton.dev/v1beta1
+kind: Task
+metadata:
+  name: cleanup
+spec:
+  workspaces:
+    - name: source
+  steps:
+    - name: cleanup
+      image: quay.io/openshift/origin-cli:latest
+      script: |
+        echo "Cleaning up resources..."
+        oc delete all --selector app=hit-counter --ignore-not-found
+        echo "Cleanup Done"
+
+---
+apiVersion: tekton.dev/v1beta1
+kind: Task
+metadata:
+  name: nose
+spec:
+  workspaces:
+    - name: source
+  steps:
+    - name: nosetests
+      image: python:3.9-slim
+      workingDir: $(workspaces.source.path)
+      script: |
+        if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+        nosetests -v --with-spec --spec-color
